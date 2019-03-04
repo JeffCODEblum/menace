@@ -1,0 +1,273 @@
+<!doctype html>
+<html>
+<head>
+</head>
+<body>
+    <div id="board">
+    </div>
+    <input id="xInput" type="number"></input>
+    <input id="yInput" type="number"></input>
+    <button id="goButton" onclick="userMove()">Go</button>
+    <button id="resetButton" onclick="resetBoard()">Reset</button>
+<script>
+
+var matrix = [
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0]
+];
+
+var boardRecord = [];
+var permutations = makePermutations();
+//console.log(permutations);
+matrix = aiMove(matrix);
+
+function userMove() {
+    console.log("before user move");
+    console.log(JSON.stringify(matrix));
+    var y = document.getElementById('yInput').value;
+    var x = document.getElementById('xInput').value;
+    if (y >= 0 && y < 3 && x >=0 && x < 3 && matrix[y][x] == 0) {
+        matrix[y][x] = 2;
+        printBoard(matrix);
+        var winner = checkWin();
+        if (winner != 0) {
+            console.log("winner is " + winner);
+            return;
+        }
+        console.log("after user move");
+        console.log(JSON.stringify(matrix));
+        matrix = aiMove(matrix);
+    }
+}
+
+function aiMove(matrix) {
+    // match up the board
+    var board = false;
+    for (var i = 0; i < permutations.length; i++) {
+        var equivelancy = equivelant(matrix, permutations[i].boardState);
+        if (equivelancy.match == true) {
+            board = permutations[i];
+            break;
+        }
+    }
+    console.log("matched board");
+    console.log(JSON.stringify(board.boardState));
+    var newBoard = copy(board.boardState);
+    console.log("copied board");
+    console.log(JSON.stringify(newBoard));
+    var rand = board.weights[Math.floor(Math.random() * board.weights.length)];
+    newBoard[rand.y][rand.x] = 1;
+    console.log("before transform");
+    console.log(JSON.stringify(newBoard));
+    console.log(equivelancy);
+    for (var i = 0; i < (4 - equivelancy.rotationCount); i++) {
+        newBoard = rotate(newBoard);
+    }
+    
+    if (equivelancy.isReflected == true) {
+        newBoard = reflect(newBoard);
+    }
+    
+    console.log("after transform")
+    console.log(JSON.stringify(newBoard));
+    var winner = checkWin();
+    if (winner != 0) {
+        console.log("winner is " + winner);
+        return winner;
+    }
+    printBoard(newBoard);
+    return(newBoard);
+}
+
+function checkWin() {
+    if (matrix[1][1] != 0 && matrix[1][1] == matrix[1][0] == 1 && matrix[1][0] == matrix[1][2]) {
+        return (matrix[1][1]);
+    }
+    if (matrix[1][1] !=0 && matrix[1][1] == matrix[0][1] && matrix[0][1] == matrix[2][1]) {
+        return (matrix[1][1]);
+    }
+    if (matrix[1][1] != 0 && matrix[1][1] == matrix[0][0] && matrix[0][0] == matrix[2][2]) {
+        return (matrix[1][1]);
+    }
+    if (matrix[0][0] != 0 && matrix[0][0] != 0 && matrix[0][0] == matrix[0][1] && matrix[0][1] == matrix[0][2]) {
+        return (matrix[0][0]);
+    }
+    if (matrix[0][0] != 0 && matrix[0][0] == matrix[1][0] && matrix[1][0] == matrix[2][0]) {
+        return (matrix[0][0]);
+    }
+    if (matrix[2][2] != 0 && matrix[2][2] == matrix[2][1] && matrix[2][1] == matrix[2][0]) {
+        return (matrix[2][2]);
+    }
+    if (matrix[2][2] != 0 && matrix[2][2] == matrix[1][2] && matrix[1][2] == matrix[0][2]) {
+        return (matrix[2][2]);
+    }
+    return 0;
+}
+
+function resetBoard() {
+    boardRecord = [];
+    matrix = [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]
+    ];
+    matrix = aiMove(matrix);
+    printBoard(matrix);
+}
+
+function printBoard(matrix) {
+    boardString = "";
+    for (var i = 0; i < 3; i++) {
+        for (var j = 0; j < 3; j++) {
+            boardString += matrix[i][j];
+        }
+        boardString += "<br>";
+    }
+    document.getElementById('board').innerHTML = boardString;
+}
+
+function countTarget(matrix, target) {
+    count = 0;
+    for (var i = 0; i < 3; i++) {
+        for (var j = 0; j < 3; j++) {
+            if (matrix[i][j] == target) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+function makePermutations() {
+    var permutations = [];
+    i = 0;
+    for (var i = 0; i < 19683; i++) {
+        var c = i;
+        var perm = [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]
+        ];
+        for (var k = 0; k < 3; k++) {
+            for (var l = 0; l < 3; l++) {
+                perm[k][l] = Math.floor(c % 3);
+                c /= 3;
+            }
+        }
+        var oneCount = countTarget(perm, 1);
+        var twoCount = countTarget(perm, 2);
+        if (oneCount == twoCount) {
+            var ok = true;
+            for (var j = 0; j < permutations.length; j++) {
+                var checkPerm = copy(perm);
+                if (equivelant(permutations[j].boardState, checkPerm).match) {
+                    ok = false;
+                }
+            }
+            if (ok) {
+                var weights = [];                
+                for (var m = 0; m < 3; m++) {
+                    for (var n = 0; n < 3; n++) {
+                        if (perm[m][n] == 0) {
+                            weights.push({x: n, y: m});
+                        }
+                    }
+                }
+                
+                permutations.push({boardState: perm, weights: weights});
+                //permutations.push(perm);
+
+            }
+        }
+    }
+    var blank = [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]
+    ];
+    return permutations;
+}
+
+function copy(source) {
+    var dest = [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]
+    ];
+    for (var i=0; i<3; i++) {
+        for (var j=0; j<3; j++) {
+            dest[i][j] = source[i][j];
+        }
+    }
+    return dest;
+}
+
+function transpose(matrix) {
+    var transposed = [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]
+    ];
+    for (var i=0; i < matrix.length; i++) {
+        for (var j=0; j<matrix[i].length; j++) {
+            transposed[j][i] = matrix[i][j];
+        }
+    }
+    return transposed;
+}
+
+function reverseColumns(matrix) {
+    var reversed = copy(matrix);
+    for (var i=0; i<matrix.length; i++) {
+        reversed[0][i] = matrix[2][i];
+        reversed[2][i] = matrix[0][i];
+    }
+    return reversed;
+}
+
+function rotate(matrix) {
+    var transposed = transpose(matrix);
+    var rotated = reverseColumns(transposed);
+    return rotated;
+}
+
+function reflect(matrix) {
+    var reflected = copy(matrix);
+    for (var i=0; i< reflected.length; i++) {
+        reflected[i][0] = matrix[i][2];
+        reflected[i][2] = matrix[i][0];
+    }
+    return reflected;
+}
+
+function equal(a, b) {
+    for (var i = 0; i < 3; i++) {
+        for (var j = 0; j < 3; j++) {
+            if (a[i][j] != b[i][j]) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+function equivelant(a, b) {
+    var testMatrix = copy(a);
+    for (var i = 0; i < 4; i++) {
+        if (equal(testMatrix, b)) {
+            return {match: true, rotationCount: i, isReflected: false};
+        }
+        var reflected = reflect(testMatrix);
+        if (equal(reflected, b)) {
+            return {match: true, rotationCount : i, isReflected: true};
+        }
+        testMatrix = rotate(testMatrix);
+    }
+    return {match: false};
+}
+
+</script>
+
+</body>
+</html>
