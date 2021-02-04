@@ -109,12 +109,27 @@ function checkWin() {
     if (matrix[2][0] !== 0 && matrix[2][0] === matrix[1][1] && matrix[1][1] === matrix[0][2]) {
         win = matrix[2][0];
     }
+    // detect draw
+    if (win === 0) {
+        let openSpace = false;
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (matrix[i][j] === 0) {
+                    openSpace = true;
+                }
+            }
+        }
+        if (!openSpace) {
+            // we have a draw
+            win = 3;
+        }
+    }
     console.log(boardRecord);
     if (win !== 0) {
         exp++;
         for (let i = 0; i < boardRecord.length; i++) {
             // reward
-            if (win === 1) {
+            if (win === 1 || win === 3) {
                 boardRecord[i].board.weights.push(boardRecord[i].moveTaken);
                 boardRecord[i].board.weights.push(boardRecord[i].moveTaken);
                 boardRecord[i].board.weights.push(boardRecord[i].moveTaken);
@@ -124,7 +139,17 @@ function checkWin() {
                 boardRecord[i].board.weights.splice(boardRecord[i].weights.indexOf(boardRecord[i].weights.moveTaken), 1);
             }
         }
-        alert("winner is " + win);
+    }
+    switch (win) {
+        case 1:
+            alert("Computer Wins");
+            break;
+        case 2:
+            alert("Player Wins");
+            break;
+        case 3:
+            alert("Draw");
+            break;
     }
     return win;
 }
