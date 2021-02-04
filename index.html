@@ -17,6 +17,7 @@ var matrix = [
     [0, 0, 0]
 ];
 
+var exp = 0;
 var boardRecord = [];
 var permutations = makePermutations();
 //console.log(permutations);
@@ -31,13 +32,14 @@ function userMove() {
         printBoard(matrix);
         var winner = checkWin();
         if (winner != 0) {
-            console.log("winner is " + winner);
+            console.log("winner is " + winner, boardRecord);
             return;
         }
         matrix = aiMove(matrix);
         winner = checkWin();
         if (winner !== 0) {
-            console.log("winner is" + winner);
+            console.log("winner is" + winner, boardRecord);
+            return;
         }
     }
 }
@@ -55,6 +57,10 @@ function aiMove(matrix) {
     }
     var newBoard = copy(board.boardState);
     var rand = board.weights[Math.floor(Math.random() * board.weights.length)];
+    boardRecord.push({
+        board,
+        moveTaken: rand
+    });
     newBoard[rand.y][rand.x] = 1;
     if (equivelancy.isReflected == true) {
         newBoard = reflect(newBoard);
@@ -103,7 +109,23 @@ function checkWin() {
     if (matrix[2][0] !== 0 && matrix[2][0] === matrix[1][1] && matrix[1][1] === matrix[0][2]) {
         win = matrix[2][0];
     }
-    console.log('win', win);
+    console.log(boardRecord);
+    if (win !== 0) {
+        exp++;
+        for (let i = 0; i < boardRecord.length; i++) {
+            // reward
+            if (win === 1) {
+                boardRecord[i].board.weights.push(boardRecord[i].moveTaken);
+                boardRecord[i].board.weights.push(boardRecord[i].moveTaken);
+                boardRecord[i].board.weights.push(boardRecord[i].moveTaken);
+            }
+            // penalize
+            else if (win === 2) {
+                boardRecord[i].board.weights.splice(boardRecord[i].weights.indexOf(boardRecord[i].weights.moveTaken), 1);
+            }
+        }
+        alert("winner is " + win);
+    }
     return win;
 }
 
