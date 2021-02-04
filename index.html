@@ -23,8 +23,7 @@ var permutations = makePermutations();
 matrix = aiMove(matrix);
 
 function userMove() {
-    console.log("before user move");
-    console.log(JSON.stringify(matrix));
+    console.log('user move');
     var y = document.getElementById('yInput').value;
     var x = document.getElementById('xInput').value;
     if (y >= 0 && y < 3 && x >=0 && x < 3 && matrix[y][x] == 0) {
@@ -35,13 +34,16 @@ function userMove() {
             console.log("winner is " + winner);
             return;
         }
-        console.log("after user move");
-        console.log(JSON.stringify(matrix));
         matrix = aiMove(matrix);
+        winner = checkWin();
+        if (winner !== 0) {
+            console.log("winner is" + winner);
+        }
     }
 }
 
 function aiMove(matrix) {
+    console.log('ai move');
     // match up the board
     var board = false;
     for (var i = 0; i < permutations.length; i++) {
@@ -51,58 +53,58 @@ function aiMove(matrix) {
             break;
         }
     }
-    console.log("matched board");
-    console.log(JSON.stringify(board.boardState));
     var newBoard = copy(board.boardState);
-    console.log("copied board");
-    console.log(JSON.stringify(newBoard));
     var rand = board.weights[Math.floor(Math.random() * board.weights.length)];
     newBoard[rand.y][rand.x] = 1;
-    console.log("before transform");
-    console.log(JSON.stringify(newBoard));
-    console.log(equivelancy);
+    if (equivelancy.isReflected == true) {
+        newBoard = reflect(newBoard);
+    }
+
     for (var i = 0; i < (4 - equivelancy.rotationCount); i++) {
         newBoard = rotate(newBoard);
     }
     
-    if (equivelancy.isReflected == true) {
-        newBoard = reflect(newBoard);
-    }
-    
-    console.log("after transform")
-    console.log(JSON.stringify(newBoard));
-    var winner = checkWin();
-    if (winner != 0) {
-        console.log("winner is " + winner);
-        return winner;
-    }
     printBoard(newBoard);
     return(newBoard);
 }
 
 function checkWin() {
-    if (matrix[1][1] != 0 && matrix[1][1] == matrix[1][0] == 1 && matrix[1][0] == matrix[1][2]) {
-        return (matrix[1][1]);
+    console.log("checkwin fired", matrix);
+    let win = 0;
+    // vert 1
+    if (matrix[0][0] !== 0 && matrix[0][0] === matrix[0][1] && matrix[0][1] === matrix[0][2]) {
+        win = matrix[0][0];
     }
-    if (matrix[1][1] !=0 && matrix[1][1] == matrix[0][1] && matrix[0][1] == matrix[2][1]) {
-        return (matrix[1][1]);
+    // vert 2
+    if (matrix[1][0] !== 0 && matrix[1][0] === matrix[1][1] && matrix[1][1] === matrix[1][2]) {
+        win = matrix[1][0];
     }
-    if (matrix[1][1] != 0 && matrix[1][1] == matrix[0][0] && matrix[0][0] == matrix[2][2]) {
-        return (matrix[1][1]);
+    // vert 3
+    if (matrix[2][0] !== 0 && matrix[2][0] === matrix[2][1] && matrix[2][1] === matrix[2][2]) {
+        win = matrix[2][0];
     }
-    if (matrix[0][0] != 0 && matrix[0][0] != 0 && matrix[0][0] == matrix[0][1] && matrix[0][1] == matrix[0][2]) {
-        return (matrix[0][0]);
+    // horiz 1
+    if (matrix[0][0] !== 0 && matrix[0][0] === matrix[1][0] && matrix[1][0] === matrix[2][0]) {
+        win = matrix[0][0];
     }
-    if (matrix[0][0] != 0 && matrix[0][0] == matrix[1][0] && matrix[1][0] == matrix[2][0]) {
-        return (matrix[0][0]);
+    // horiz 2
+    if (matrix[0][1] !== 0 && matrix[0][1] === matrix[1][1] && matrix[1][1] === matrix[2][1]) {
+        win = matrix[0][1];
     }
-    if (matrix[2][2] != 0 && matrix[2][2] == matrix[2][1] && matrix[2][1] == matrix[2][0]) {
-        return (matrix[2][2]);
+    // horiz 3
+    if (matrix[0][2] !== 0 && matrix[0][2] === matrix[1][2] && matrix[1][2] === matrix[2][2]) {
+        win = matrix[0][2];
     }
-    if (matrix[2][2] != 0 && matrix[2][2] == matrix[1][2] && matrix[1][2] == matrix[0][2]) {
-        return (matrix[2][2]);
+    // diag1
+    if (matrix[0][0] !== 0 && matrix[0][0] === matrix[1][1] && matrix[1][1] === matrix[2][2]) {
+        win = matrix[0][0];
     }
-    return 0;
+    // diag2
+    if (matrix[2][0] !== 0 && matrix[2][0] === matrix[1][1] && matrix[1][1] === matrix[0][2]) {
+        win = matrix[2][0];
+    }
+    console.log('win', win);
+    return win;
 }
 
 function resetBoard() {
